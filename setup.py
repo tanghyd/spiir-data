@@ -15,7 +15,7 @@ setup(
         "matplotlib",
         "numpy>=1.23",
         "scipy",
-s        "tqdm",
+        "tqdm",
     ],
     extras_reqire={"pycbc": "pycbc"},
     description="A data processing library for the SPIIR gravitational wave pipeline.",
