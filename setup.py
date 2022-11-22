@@ -15,8 +15,9 @@ setup(
         "scipy",
         "pandas",
         "matplotlib",
+        "tqdm",
     ],
-    description="A Python data library for gravitational wave science by SPIIR.",
+    description="A data processing library for the SPIIR gravitational wave pipeline.",
     author="Daniel Tang",
     author_email="daniel.tang@uwa.edu.au",
 )
