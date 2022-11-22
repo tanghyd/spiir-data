@@ -1,7 +1,7 @@
-# SPIIR Search Package
+# SPIIR Data Package
 
-This repository contains gravitational wave search algorithms used by the SPIIR
-low latency CBC search pipeline.
+This repository contains gravitational wave data generation and processing algorithms
+used by hte SPIIR low latency CBC search pipeline.
 
 ## Installation
 
@@ -17,18 +17,18 @@ Next we need to change directories to where this repository is installed. For ex
 
 ```
 # download spiir repository and change working directory
-git clone https://github.com/tanghyd/spiir-search.git
+git clone https://github.com/tanghyd/spiir-data.git
 cd spiir-search
 
-# then we can install our local "spiir-search" package
+# then we can install our local "spiir-data" package
 # this will also install required dependencies
 pip install .  # optionally add the -e flag for --editable mode
 ```
 
 ## Usage
 
-Now we can import our package from the `spiir.search` namespace in Python as follows:
+Now we can import our package from the `spiir.data` namespace in Python as follows:
 
 ```
-import spiir.search
+import spiir.data
 ```
