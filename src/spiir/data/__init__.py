@@ -1,2 +1,1 @@
-from . import distribution, ligolw
-from . import array, mp
+from . import distribution, ligolw, processing

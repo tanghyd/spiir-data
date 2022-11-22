@@ -6,7 +6,7 @@ import multiprocessing as mp
 from collections.abc import Callable, Sequence
 from functools import partial
 from itertools import chain, islice
-from typing import Iterable, Optional, Any, Union
+from typing import Any, Iterable, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -233,5 +233,5 @@ def parallel_apply(
                     logger.debug(f"Flattening {idx+1} chunks together as a list...")
                     return [x for chunk in results for x in chunk]
             else:
-                logger.debug(f"Returning result chunks without concatenation...")
+                logger.debug("Returning result chunks without concatenation...")
                 return results
