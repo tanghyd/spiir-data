@@ -1,9 +1,9 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional, Union, Tuple, Callable
+from typing import Callable, Optional, Tuple, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import scipy
 from tqdm import tqdm
 
@@ -16,8 +16,16 @@ MAX_DRAW_SIZE: int = int(1e7)
 distributions: dict = {}
 
 
-class Distribution(ABC):
+def estimate_n_redraw(n: int, ratio: float) -> int:
+    """Use ratio of samples satisfying constraints to increare redraw size and
+    speed up parameter re-sampling from distributions.
 
+    See: pycbc.distributions.joint.py#L331
+    """
+    return int(min(MAX_DRAW_SIZE, np.ceil(n / ratio)))
+
+
+class Distribution(ABC):
     def __init__(
         self,
         variables: Union[str, Tuple[str, ...]],
@@ -25,7 +33,7 @@ class Distribution(ABC):
         pipe: Optional[Tuple[Callable]] = None,
         seed: Optional[Union[int, np.random.Generator]] = None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         self.variables = (variables,) if isinstance(variables, str) else variables
         self.distribution = distribution
@@ -35,22 +43,15 @@ class Distribution(ABC):
         self.kwargs = kwargs
 
     def redraw(
-        self,
-        samples: pd.DataFrame,
-        n: int,
-        verbose: bool = False
+        self, samples: pd.DataFrame, n: int, verbose: bool = False
     ) -> pd.DataFrame:
         n_samples = len(samples)
         n_remain = n - n_samples
         df = pd.DataFrame(
-            np.zeros((n_remain, len(samples.columns))),
-            columns=samples.columns
+            np.zeros((n_remain, len(samples.columns))), columns=samples.columns
         )
-        
-        # NOTE: Use ratio of samples satisfying constraints to increase redraw
-        #   size and speed up resample, see: pycbc.distributions.joint.py#L331
-        estimate_n_redraw = lambda n, ratio: int(min(MAX_DRAW_SIZE, np.ceil(n/ratio)))
-        n_draw = estimate_n_redraw(n, n_samples / (n+1))
+
+        n_draw = estimate_n_redraw(n, n_samples / (n + 1))
 
         while n_remain:
             desc = f"Running data pipeline on remaining {n_remain}/{n} redrawn samples"
@@ -58,14 +59,14 @@ class Distribution(ABC):
             n_resamples = len(resamples)
 
             # update iteration tracking variables
-            i = n - n_samples - n_remain # start index to assign resamples to
+            i = n - n_samples - n_remain  # start index to assign resamples to
             j = min(n_resamples, n_remain)  # cap resamples to prevent overflow
             n_remain = max(0, n_remain - n_resamples)
-            n_draw = estimate_n_redraw(n_draw, n_resamples / (n_draw+1))
+            n_draw = estimate_n_redraw(n_draw, n_resamples / (n_draw + 1))
 
             # assign sample subset to dataframe in memory
-            df.iloc[i : i+j] = resamples.iloc[:j].values
-        
+            df.iloc[i : i + j] = resamples.iloc[:j].values
+
         df.index += n_samples
         return pd.concat([samples, df], axis=0)
 
@@ -102,7 +103,7 @@ class NumPyDistribution(Distribution):
         pipe: Optional[Tuple[Callable]] = None,
         seed: Optional[Union[int, np.random.Generator]] = None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(variables, distribution, pipe, seed, *args, **kwargs)
         self._distribution = getattr(self.rng, self.distribution)
@@ -140,7 +141,7 @@ class SciPyDistribution(Distribution):
         pipe: Optional[Tuple[Callable]] = None,
         seed: Optional[Union[int, np.random.Generator]] = None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(variables, distribution, pipe, seed, *args, **kwargs)
         self._distribution = getattr(scipy.stats, self.distribution)
@@ -180,13 +181,14 @@ class PyCBCDistribution(Distribution):
         pipe: Optional[Tuple[Callable]] = None,
         seed: Optional[Union[int, np.random.Generator]] = None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(variables, distribution, pipe, seed, *args, **kwargs)
         # TODO: Work out a cleaner solution to handle PyCBC distributions
         #   i.e. pycbc requires a variable name as keyword argument when instantiating
         #   some (but not all) distributions without bounds, so pass as None
         from pycbc.distributions import distribs
+
         distribs_without_variable_kwargs = ["uniform_sky", "uniform_solidangle"]
         if self.distribution not in distribs_without_variable_kwargs:
             for variable in self.variables:
@@ -227,7 +229,7 @@ class SPIIRDistribution(Distribution):
         pipe: Optional[Tuple[Callable]] = None,
         seed: Optional[Union[int, np.random.Generator]] = None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(variables, distribution, pipe, seed, *args, **kwargs)
         self._distribution = distributions[self.distribution]
@@ -243,14 +245,13 @@ class SPIIRDistribution(Distribution):
 
 
 class JointDistribution:
-    
     def __init__(
         self,
         distributions: Tuple[Distribution],
         pipe: Optional[Tuple[Callable]] = None,
         seed: Optional[Union[int, np.random.Generator]] = None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         self.distributions = distributions
         self.pipe = pipe
@@ -279,22 +280,15 @@ class JointDistribution:
         return str_repr
 
     def redraw(
-        self,
-        samples: pd.DataFrame,
-        n: int,
-        verbose: bool=False
+        self, samples: pd.DataFrame, n: int, verbose: bool = False
     ) -> pd.DataFrame:
         n_samples = len(samples)
         n_remain = n - n_samples
         df = pd.DataFrame(
-            np.zeros((n_remain, len(samples.columns))),
-            columns=samples.columns
+            np.zeros((n_remain, len(samples.columns))), columns=samples.columns
         )
-        
-        # NOTE: Use ratio of samples satisfying constraints to increase redraw
-        #   size and speed up resample, see: pycbc.distributions.joint.py#L331
-        estimate_n_redraw = lambda n, ratio: int(min(MAX_DRAW_SIZE, np.ceil(n/ratio)))
-        n_draw = estimate_n_redraw(n, n_samples / (n+1))
+
+        n_draw = estimate_n_redraw(n, n_samples / (n + 1))
 
         while n_remain:
             desc = f"Running data pipeline on remaining {n_remain}/{n} samples"
@@ -302,14 +296,14 @@ class JointDistribution:
             n_resamples = len(resamples)
 
             # update iteration tracking variables
-            i = n - n_samples - n_remain # start index to assign resamples to
+            i = n - n_samples - n_remain  # start index to assign resamples to
             j = min(n_resamples, n_remain)  # cap resamples to prevent overflow
             n_remain = max(0, n_remain - n_resamples)
-            n_draw = estimate_n_redraw(n_draw, n_resamples / (n_draw+1))
+            n_draw = estimate_n_redraw(n_draw, n_resamples / (n_draw + 1))
 
             # assign sample subset to dataframe in memory
-            df.iloc[i : i+j] = resamples.iloc[:j].values
-        
+            df.iloc[i : i + j] = resamples.iloc[:j].values
+
         df.index += n_samples
         return pd.concat([samples, df], axis=0)
 
@@ -321,8 +315,7 @@ class JointDistribution:
         desc: Optional[str] = None,
     ) -> pd.DataFrame:
         samples = pd.concat(
-            [dist.draw(n, redraw, verbose) for dist in self.distributions],
-            axis=1
+            [dist.draw(n, redraw, verbose) for dist in self.distributions], axis=1
         ).dropna(axis=0)
 
         if self.pipe is not None:
