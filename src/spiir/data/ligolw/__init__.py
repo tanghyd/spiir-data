@@ -24,7 +24,6 @@ from .table import (
     build_dataframe_from_table,
     get_table_from_xmldoc,
     get_tables_from_xmldoc,
-    load_ligolw_tables,
     load_table_from_xml,
     load_table_from_xmls,
     load_tables_from_xml,

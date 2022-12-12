@@ -473,29 +473,3 @@ def append_table_to_ligolw(
             existing_table.extend(table)
 
     return xmldoc
-
-
-def load_ligolw_tables(
-    paths: Union[str, bytes, PathLike, Sequence[Union[str, bytes, PathLike]]],
-    table: str,
-    columns: Optional[Sequence[str]] = None,
-    ilwdchar_compat: bool = True,
-    legacy_postcoh_compat: bool = True,
-    nullable: bool = False,
-    nproc: int = 1,
-    verbose: bool = False,
-) -> pd.DataFrame:
-    logger.warning(
-        "spiir.io.ligolw.table deprecation warning: load_ligolw_tables will be "
-        "deprecated in a future release. Please use load_table_from_xmls instead."
-    )
-    load_table_from_xmls(
-        paths,
-        table,
-        columns,
-        ilwdchar_compat,
-        legacy_postcoh_compat,
-        nullable,
-        nproc=nproc,
-        verbose=verbose,
-    )
